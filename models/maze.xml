@@ -1,0 +1,80 @@
+<?xml version="1.0" ?>
+<mujoco model="maze">
+  <!-- ========== COMPILATION OPTIONS ========== -->
+  <compiler angle="radian" inertiafromgeom="true" />
+  
+  <!-- ========== GLOBAL SETTINGS ========== -->
+  <option timestep="0.001" viscosity="0.0" gravity="0 0 -9.81">
+    <flag warmstart="disable" />
+  </option>
+  
+  <!-- ========== ASSETS ========== -->
+  <asset>
+    <!-- Materials for visualization -->
+    <material name="wall" rgba="0.8 0.8 0.8 1.0" />
+    <material name="floor" rgba="0.5 0.5 0.5 1.0" />
+    <material name="goal" rgba="0.0 1.0 0.0 0.3" />
+  </asset>
+  
+  <!-- ========== WORLD BODY ========== -->
+  <worldbody>
+    <!-- Ground plane -->
+    <geom name="ground" type="plane" size="10 10 0.1" pos="0 0 -0.1" material="floor" />
+    
+    <!-- ========== SIMPLE RECTANGULAR MAZE ========== -->
+    <!-- Outer boundary walls (soft contact for smooth gradients) -->
+    
+    <!-- North wall (top) -->
+    <geom name="wall_north" type="box" size="1.0 0.05 0.1" pos="0 1.0 0.05" material="wall" 
+          solimp="0.9 0.95 0.001" solref="0.02 1" />
+    
+    <!-- South wall (bottom) -->
+    <geom name="wall_south" type="box" size="1.0 0.05 0.1" pos="0 -1.0 0.05" material="wall" 
+          solimp="0.9 0.95 0.001" solref="0.02 1" />
+    
+    <!-- East wall (right) -->
+    <geom name="wall_east" type="box" size="0.05 1.0 0.1" pos="1.0 0 0.05" material="wall" 
+          solimp="0.9 0.95 0.001" solref="0.02 1" />
+    
+    <!-- West wall (left) -->
+    <geom name="wall_west" type="box" size="0.05 1.0 0.1" pos="-1.0 0 0.05" material="wall" 
+          solimp="0.9 0.95 0.001" solref="0.02 1" />
+    
+    <!-- ========== INTERNAL MAZE WALLS ========== -->
+    <!-- These can be adjusted to create different maze configurations -->
+    
+    <!-- Vertical wall (middle) from south to center -->
+    <geom name="wall_v1" type="box" size="0.05 0.4 0.1" pos="0.0 -0.4 0.05" material="wall" 
+          solimp="0.9 0.95 0.001" solref="0.02 1" />
+    
+    <!-- Horizontal wall (upper-left corner) -->
+    <geom name="wall_h1" type="box" size="0.4 0.05 0.1" pos="-0.4 0.5 0.05" material="wall" 
+          solimp="0.9 0.95 0.001" solref="0.02 1" />
+    
+    <!-- Vertical wall (upper-right) -->
+    <geom name="wall_v2" type="box" size="0.05 0.3 0.1" pos="0.5 0.6 0.05" material="wall" 
+          solimp="0.9 0.95 0.001" solref="0.02 1" />
+    
+    <!-- ========== START AND GOAL MARKERS ========== -->
+    <!-- Start position marker (southwest) -->
+    <geom name="start_marker" type="box" size="0.05 0.05 0.01" pos="-0.8 -0.8 0.01" material="floor" 
+          rgba="0.0 0.0 1.0 0.1" />
+    
+    <!-- Goal position marker at maze(0.6, -0.6) = sim(0.8, 0.2) -->
+    <geom name="goal_marker" type="box" size="0.1 0.1 0.01" pos="0.6 -0.6 0.01" material="goal"
+          rgba="0.0 1.0 0.0 0.2" />
+    
+    <!-- ========== SITES FOR REFERENCE ========== -->
+    <!-- Start site for robot initialization -->
+    <site name="start_site" type="sphere" size="0.05" pos="-0.8 -0.8 0.05" rgba="0.0 0.0 1.0 0.5" />
+    
+    <!-- Goal site for distance computation — maze(0.6, -0.6) = sim(0.8, 0.2) -->
+    <site name="goal_site" type="sphere" size="0.1" pos="0.6 -0.6 0.05" rgba="0.0 1.0 0.0 0.5" />
+  </worldbody>
+  
+  <!-- ========== SENSORS ========== -->
+  <sensor>
+    <!-- Goal site position for reference in loss computation -->
+    <framepos name="goal_pos" objtype="site" objname="goal_site" />
+  </sensor>
+</mujoco>

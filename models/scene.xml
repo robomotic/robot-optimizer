@@ -1,0 +1,102 @@
+<?xml version="1.0" ?>
+<!--
+  Combined scene for 3D trajectory rendering.
+  Coordinate system: x,y in [-1, 1]; maps from simulation [0,1] via maze = 2*sim - 1.
+  Start: (-0.8, -0.8)  →  sim (0.1, 0.1)
+  Goal : ( 0.6, -0.6)  →  sim (0.8, 0.2)
+-->
+<mujoco model="dmo_scene">
+  <compiler angle="radian" inertiafromgeom="true" />
+  <option timestep="0.001" gravity="0 0 -9.81" />
+
+  <!-- ── Rendering quality ─────────────────────────────────────── -->
+  <visual>
+    <headlight ambient="0.35 0.35 0.35"
+               diffuse="0.8 0.8 0.8"
+               specular="0.2 0.2 0.2" />
+    <rgba haze="0.12 0.18 0.24 1" />
+    <quality shadowsize="4096" />
+    <global offwidth="1280" offheight="720" />
+  </visual>
+
+  <!-- ── Materials ─────────────────────────────────────────────── -->
+  <asset>
+    <material name="floor"      rgba="0.22 0.22 0.22 1.0" />
+    <material name="wall"       rgba="0.82 0.82 0.82 1.0" reflectance="0.1" />
+    <material name="robot_body" rgba="0.90 0.25 0.15 1.0" />
+    <material name="wheel"      rgba="0.12 0.12 0.12 1.0" />
+    <material name="caster"     rgba="0.40 0.50 0.90 1.0" />
+    <material name="goal"       rgba="0.05 0.90 0.15 0.70" />
+    <material name="start"      rgba="0.15 0.30 0.95 0.45" />
+    <material name="arrow"      rgba="1.00 0.85 0.00 1.0" />
+  </asset>
+
+  <worldbody>
+
+    <!-- ── Lights ──────────────────────────────────────────────── -->
+    <light name="sun"  pos="0 -1 5" dir="0 0.3 -1"
+           diffuse="0.70 0.70 0.70" specular="0.30 0.30 0.30" castshadow="true" />
+    <light name="fill" pos="1  2 3" dir="-0.3 -0.6 -1"
+           diffuse="0.25 0.25 0.28" specular="0.0 0.0 0.0" castshadow="false" />
+
+    <!-- ── Floor ───────────────────────────────────────────────── -->
+    <geom name="floor" type="plane" size="5 5 0.1" pos="0 0 0" material="floor" />
+
+    <!-- ── Outer maze walls ────────────────────────────────────── -->
+    <geom name="wall_north" type="box" size="1.05 0.05 0.15" pos=" 0.0  1.0 0.075" material="wall" />
+    <geom name="wall_south" type="box" size="1.05 0.05 0.15" pos=" 0.0 -1.0 0.075" material="wall" />
+    <geom name="wall_east"  type="box" size="0.05 1.05 0.15" pos=" 1.0  0.0 0.075" material="wall" />
+    <geom name="wall_west"  type="box" size="0.05 1.05 0.15" pos="-1.0  0.0 0.075" material="wall" />
+
+    <!-- ── Internal walls (matches maze.xml) ───────────────────── -->
+    <geom name="wall_v1" type="box" size="0.05 0.40 0.15" pos=" 0.0 -0.4 0.075" material="wall" />
+    <geom name="wall_h1" type="box" size="0.40 0.05 0.15" pos="-0.4  0.5 0.075" material="wall" />
+    <geom name="wall_v2" type="box" size="0.05 0.30 0.15" pos=" 0.5  0.6 0.075" material="wall" />
+
+    <!-- ── Goal marker at maze(0.6, -0.6) = sim(0.8, 0.2) ─────── -->
+    <geom name="goal_pad"  type="box" size="0.10 0.10 0.004" pos="0.6 -0.6 0.002" material="goal" />
+    <geom name="goal_post" type="cylinder" size="0.012 0.25"  pos="0.6 -0.6 0.250" rgba="0.05 0.9 0.15 0.8" />
+
+    <!-- ── Start marker at maze(-0.8, -0.8) = sim(0.1, 0.1) ───── -->
+    <geom name="start_pad" type="box" size="0.06 0.06 0.003" pos="-0.8 -0.8 0.001" material="start" />
+
+    <!-- ── Robot (free body — position set per-frame in Python) ── -->
+    <body name="robot" pos="-0.8 -0.8 0.04">
+      <joint name="root" type="free" />
+      <inertial pos="0 0 0" mass="0.5" diaginertia="0.01 0.01 0.01" />
+
+      <!-- Chassis -->
+      <geom name="chassis" type="box" size="0.050 0.040 0.020" material="robot_body" />
+
+      <!-- Forward-direction arrow (yellow nub on front) -->
+      <geom name="nose" type="box" size="0.018 0.008 0.006"
+            pos="0.060 0 0.022" material="arrow" />
+
+      <!-- Left wheel -->
+      <body name="left_wheel" pos="0 0.044 0">
+        <inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001" />
+        <geom name="left_wheel_geom" type="cylinder" size="0.025"
+              fromto="0 -0.012 0 0 0.012 0" material="wheel" />
+        <joint name="left_wheel" type="hinge" axis="0 1 0" />
+      </body>
+
+      <!-- Right wheel -->
+      <body name="right_wheel" pos="0 -0.044 0">
+        <inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001" />
+        <geom name="right_wheel_geom" type="cylinder" size="0.025"
+              fromto="0 -0.012 0 0 0.012 0" material="wheel" />
+        <joint name="right_wheel" type="hinge" axis="0 1 0" />
+      </body>
+
+      <!-- Caster ball -->
+      <body name="caster" pos="0.042 0 -0.014">
+        <inertial pos="0 0 0" mass="0.05" diaginertia="0.0001 0.0001 0.0001" />
+        <geom name="caster_geom" type="sphere" size="0.010" material="caster" />
+        <joint name="caster_x" type="slide" axis="1 0 0" limited="false" />
+        <joint name="caster_y" type="slide" axis="0 1 0" limited="false" />
+        <joint name="caster_z" type="slide" axis="0 0 1" limited="false" />
+      </body>
+    </body>
+
+  </worldbody>
+</mujoco>
